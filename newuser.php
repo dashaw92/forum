@@ -1,37 +1,23 @@
 <?php
   include("./main.php");
+
   $name = $email = $password = "";
   $err = false;
 
   function validate_var($var) {
-    global $err;
-    if(isset($var) && $err == true) {
-      return htmlspecialchars($var);
+    global $err; //Check if form is already been submitted as valid. Do not want fields to stay
+                 //populated after submission.
+    if(isset($_POST[$var]) && $err == true) {
+      return htmlspecialchars($_POST[$var]);
     } else {
       return "";
     }
   }
 
-  if($_SERVER["REQUEST_METHOD"] == "POST") {
-    $err = false;
-    $name = clean_input($_POST["user"]);
-    $email = clean_input($_POST["email"]);
-    $password = clean_input($_POST["password"]);
-    if(empty($name)) {
-      echo "Username is required.<br />";
-      $err = true;
-    }
-    if(empty($email)) {
-      echo "E-mail is required.<br />";
-      $err = true;
-    }
-    if(empty($password)) {
-      echo "Password is required.<br />";
-      $err = true;
-    }
-    if($err == false) {
-      //submit INSERT after checking if username or email is taken
-    }
+  function create_password($original) {
+    $first = md5(uniqid(rand(), true));
+    $salt = substr($first, 0, 12);
+    return array("pw" => hash("sha512", $original . $salt), "salt" => $salt);
   }
 
   function clean_input($in) {
@@ -48,10 +34,43 @@
     <h1>Register a new user</h1>
     <hr />
     <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
-      <p>Username: <input type="text" name="user" value="<?php echo validate_var($_POST["user"]); ?>"/></p> 
-      <p>E-mail: <input type="text" name="email" value="<?php echo validate_var($_POST["email"]); ?>"/></p> 
-      <p>Password: <input type="password" name="password" value="<?php echo validate_var($_POST["password"]); ?>"/></p>
+      <p>Username: <input type="text" name="user" value="<?php echo validate_var("user"); ?>"/> <sup title="Required field" class="error">*</sup></p> 
+      <p>E-mail: <input type="text" name="email" value="<?php echo validate_var("email"); ?>"/> <sup title="Required field" class="error">*</sup></p> 
+      <p>Password: <input type="password" name="password" value="<?php echo validate_var("password"); ?>"/> <sup title="Required field" class="error">*</sup></p>
       <p><input type="submit" value="Register" /></p>
     </form>
+    <p><i>Fields marked with "<span class="error">*</span>" are required.</i></p>
+    <?php
+      
+      //Moved down to make status message appear at bottom instead of at the top.
+      if($_SERVER["REQUEST_METHOD"] == "POST") {
+        $err = false;
+        $name = clean_input($_POST["user"]);
+        $email = clean_input($_POST["email"]);
+        $password = clean_input($_POST["password"]);
+        if(empty($name)) {
+          $err = true;
+        }
+        if(empty($email)) {
+          $err = true;
+        }
+        if(empty($password)) {
+          $err = true;
+        }
+        if($err == false) {
+          if(!$mysql->username_exists($name) && !$mysql->email_exists($email)) {
+            $res = create_password($password);
+            $mysql->add_user($name, $email, $res["pw"], $res["salt"]);
+            echo "Registered user $name.<br />";
+          } else {
+            echo "A user already exists with those credentials.<br />";
+          }
+        }
+      }
+
+      if($err == true) {
+        echo "<span class=\"error\">One or more fields are missing.<br /></span>";
+      }
+    ?>
   </body>
 </html>
