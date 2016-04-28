@@ -48,7 +48,7 @@
         $name = clean_input($_POST["user"]);
         $email = clean_input($_POST["email"]);
         $password = clean_input($_POST["password"]);
-        if(empty($name)) {
+        if(empty($name) || !ctype_alnum($name) || strlen($name) < 3) {
           $err = true;
         }
         if(empty($email)) {
@@ -69,7 +69,7 @@
       }
 
       if($err == true) {
-        echo "<span class=\"error\">One or more fields are missing.<br /></span>";
+        echo "<span class=\"error\">One or more fields are missing or the name field contains errors.<br />Names may only consist of letters and numbers and must be at least 3 characters long.<br /></span>";
       }
     ?>
   </body>

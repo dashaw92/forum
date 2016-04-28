@@ -8,6 +8,6 @@
     <h1>Forum home</h1>
     <hr />
     <p>Welcome to the forums.</p>
-    <a href="newuser.php">Register</a>
+    <span><a href="newuser.php">Register</a> | <a href="login.php">Login</a> | <a href="home.php">Home</a></span>
   </body>
 </html>

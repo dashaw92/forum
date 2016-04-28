@@ -37,6 +37,15 @@
       $ps->close();
     }
 
+    function validate_user($name, $password) {
+      $user = $this->get_user($name);
+      if($user == false) return false;
+      if(hash("sha512", $password . $user["salt"]) == $user["password"]) {
+        return true;
+      }
+      return false;
+    }
+
     function username_exists($name) {
       global $conn;
       $ps = $conn->prepare("SELECT * FROM users WHERE name = ?");
@@ -80,18 +89,18 @@
       }
     }
 
-    function get_user($id) {
+    function get_user($name) {
       global $conn;
-      $ps = $conn->prepare("SELECT name, email, password, salt FROM users WHERE id = ?");
+      $ps = $conn->prepare("SELECT email, password, salt FROM users WHERE name = ?");
       if($ps == false) {
         return false;
       }
-      $ps->bind_param("s", $id);
+      $ps->bind_param("s", $name);
       $ps->execute();
-      $ps->bind_result($uname, $uemail, $upassword, $salt);
+      $ps->bind_result($uemail, $upassword, $salt);
       $ps->fetch();
       $ps->close();
-      return array("name" => $uname, "email" => $uemail, "password" => $upassword, "salt" => $salt);
+      return array("email" => $uemail, "password" => $upassword, "salt" => $salt);
     }
   }
 ?>
